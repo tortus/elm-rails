@@ -1,4 +1,4 @@
-module Rails (send, authToken) where
+module Rails (send, csrfToken) where
 
 {-|
 
