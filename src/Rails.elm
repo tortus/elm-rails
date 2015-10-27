@@ -6,7 +6,7 @@ module Rails (send, authToken) where
 @docs send
 
 # Tokens
-@docs authToken
+@docs csrfToken
 
 -}
 
@@ -19,20 +19,26 @@ import Native.Rails
 
 -- Http
 
-{-| Utility for working with rails. Wraps Http.send passing an Authenticity Token
+{-| Utility for working with Rails. Wraps Http.send passing a CSRF Token
 along with the type of request and a way to decode results.
-
 -}
-send : String -> Decoder value -> String -> String -> Http.Body -> Task Http.Error value
-send authToken decoder verb url body =
+send : Decoder value -> String -> String -> Http.Body -> Task Http.Error value
+send decoder verb url body =
     let
+        csrfTokenHeaders =
+            if (String.toUpper verb) == "GET" then
+                []
+            else
+                [ "X-CSRF-Token" => csrfToken ]
+
         requestSettings =
             { verb = verb
-            , headers = ["X-CSRF-Token" => authToken
-                        , "Content-Type" => "application/json"
-                        , "Accept" => "application/json, text/javascript, */*; q=0.01"
-                        , "X-Requested-With" => "XMLHttpRequest"
-                        ]
+            , headers =
+                csrfTokenHeaders ++
+                    [ "Content-Type" => "application/json"
+                    , "Accept" => "application/json, text/javascript, */*; q=0.01"
+                    , "X-Requested-With" => "XMLHttpRequest"
+                    ]
             , url = url
             , body = body
             }
@@ -41,11 +47,14 @@ send authToken decoder verb url body =
         Http.send Http.defaultSettings requestSettings
             |> Http.fromJson decoder
 
-{-| get the rails authToken from the meta tag
-returns nothing if the tag doesn't exist
+{-| If there was a `<meta name="csrf-token">` tag in the page's `<head>` when
+elm-rails loaded, returns the value its `content` attribute had at that time.
+
+Rails expects this value in the `X-CSRF-Token` header for non-`GET` requests as
+a [CSRF countermeasure](http://guides.rubyonrails.org/security.html#csrf-countermeasures).
 -}
-authToken : Maybe String
-authToken = Native.Rails.authToken
+csrfToken : Maybe String
+csrfToken = Native.Rails.csrfToken
 
 
 (=>) = (,)

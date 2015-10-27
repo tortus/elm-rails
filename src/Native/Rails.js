@@ -10,16 +10,13 @@ Elm.Native.Rails.make = function(localRuntime) {
 
     var $Maybe = Elm.Maybe.make(localRuntime);
 
-    var metaNode = document.querySelector('meta[name="csrf-token"]');
-
-    var authToken = (function() {
-        if (metaNode === null || typeof metaNode.content === "undefined"){
-            return $Maybe.Nothing;
-        }
-        return $Maybe.Just(metaNode.content);
-    })();
+    var csrfTokenNode = document.head.querySelector('meta[name="csrf-token"]');
+    var csrfToken =
+        (csrfTokenNode === null || (typeof csrfTokenNode.content !== "string"))
+            ? $Maybe.Nothing
+            : $Maybe.Just(csrfTokenNode.content);
 
     return localRuntime.Native.Rails.values = {
-        authToken : authToken
+        csrfToken : csrfToken
     };
 }
