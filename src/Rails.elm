@@ -15,6 +15,7 @@ import Task exposing (Task)
 import Json.Decode exposing (Decoder)
 import Maybe
 import Native.Rails
+import String
 
 
 -- Http
@@ -25,11 +26,16 @@ along with the type of request and a way to decode results.
 send : Decoder value -> String -> String -> Http.Body -> Task Http.Error value
 send decoder verb url body =
     let
+        csrfTokenString =
+            Maybe.withDefault "" csrfToken
+
         csrfTokenHeaders =
-            if (String.toUpper verb) == "GET" then
+            if (String.isEmpty csrfTokenString)
+                || ((String.toUpper verb) == "GET")
+            then
                 []
             else
-                [ "X-CSRF-Token" => csrfToken ]
+                [ "X-CSRF-Token" => csrfTokenString ]
 
         requestSettings =
             { verb = verb
