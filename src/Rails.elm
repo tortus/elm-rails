@@ -1,4 +1,4 @@
-module Rails (send) where
+module Rails exposing (send)
 
 {-|
 
