@@ -14,6 +14,7 @@ import Json.Decode as Decode exposing (Decoder, (:=))
 import Result exposing (Result)
 import Dict
 
+
 {-| ErrorList is a type alias for
 a list of fields to String, where `field` is expected to be a type for matching
 errors to
@@ -26,9 +27,12 @@ decode : ErrorList Field
 ```
 -}
 type alias ErrorList field =
-    List (field, String)
+    List ( field, String )
+
+
 
 -- Decoding
+
 
 {-| Decodes errors passed from rails formatted as
 
@@ -51,7 +55,7 @@ Dict.fromList
 errors : Dict.Dict String field -> Decoder (ErrorList field)
 errors mappings =
     let
-        errorsDecoder : Decoder (List (String, List String))
+        errorsDecoder : Decoder (List ( String, List String ))
         errorsDecoder =
             Decode.keyValuePairs (Decode.list Decode.string)
 
@@ -65,20 +69,18 @@ errors mappings =
                 |> Maybe.map Decode.succeed
                 |> Maybe.withDefault (Decode.fail ("Unrecognized Field: " ++ fieldName))
 
-
         -- toFinalDecoder : List (field, String) -> List (String, (List String)) -> Result String (List (field, String))
         toFinalDecoder results rawErrors =
             case rawErrors of
                 [] ->
                     Ok results
 
-                (fieldName, errors) :: others ->
+                ( fieldName, errors ) :: others ->
                     let
                         --newResults : Result String (ErrorList field)
                         newResults =
                             Decode.decodeString (fieldDecoderFor fieldName) ("\"" ++ fieldName ++ "\"")
                                 |> Result.map (tuplesFromField errors results)
-
                     in
                         case newResults of
                             Err _ ->
@@ -90,8 +92,7 @@ errors mappings =
         --tuplesFromField : List String -> (ErrorList field) -> field -> (ErrorList field)
         tuplesFromField errors results field =
             errors
-                |> List.map (\error -> (field, error))
+                |> List.map (\error -> ( field, error ))
                 |> List.append results
-
     in
         "errors" := finalDecoder
